@@ -1,4 +1,4 @@
-﻿# Python
+# Python
 __pycache__/
 *.pyc
 *.pyo
@@ -28,10 +28,10 @@ ENV/
 Thumbs.db
 
 # Large data / model artifacts - too big for git, regenerate via scripts
-data/cleaned_postings.csv
-data/salary_data_analyst.csv
-models/*.joblib
-*.joblib
+# data/cleaned_postings.csv
+# data/salary_data_analyst.csv
+# models/*.joblib
+# *.joblib
 
 # Logs
 *.log
