@@ -1,3 +1,5 @@
+![CI](https://github.com/AtharvJawalkar08/data-analyst-job-market/actions/workflows/ci.yml/badge.svg)
+
 # Data Analyst Job Market Dashboard
 
 🔗 **[Live Demo](https://data-analyst-job-market-bwgscrw3mdichimrlbahfk.streamlit.app/)**
@@ -74,3 +76,14 @@ python train_salary_model.py
 - **Validate the scrape for staleness and bias.** A one-time LinkedIn/Indeed scrape reflects postings at a single point in time and whatever the search terms happened to surface -- I'd want to note the scrape date explicitly and ideally re-scrape periodically to show trend changes, not just a snapshot.
 - **Reconcile the two datasets.** Postings and salary data come from different sources by design (noted in-app), but that also means skill-frequency findings and salary findings can't be cross-referenced (e.g., "does knowing Python actually correlate with higher pay in this data?") -- merging or at least statistically linking them would make the analysis more actionable.
 - **Add train/test evaluation transparency to the dashboard itself**, not just the training script -- e.g., an "About this model" panel showing MAE and feature importances next to the salary estimator, so the estimate doesn't look more precise than it is.
+
+
+## MLOps Pipeline
+
+This project includes a full MLOps layer on top of the core analysis and salary model:
+
+- **Containerization**: Dockerized with a Dockerfile; runs identically on any machine via docker build + docker run.
+- **Experiment Tracking**: MLflow logs parameters, metrics (test MAE, test R^2, baseline MAE), and model artifacts for every training run (train_salary_model.py).
+- **CI/CD**: GitHub Actions automatically installs dependencies, runs the test suite, and builds the Docker image on every push (see badge above).
+- **Model Testing**: tests/test_model.py enforces a minimum R^2 threshold, failing the build if model quality regresses.
+- **Data Drift Monitoring**: drift_check.py uses Evidently to compare reference vs. current data distributions and flag drift (charts/drift_report.html).
