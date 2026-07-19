@@ -1,0 +1,23 @@
+artifact_path: file:///C:/Users/A/Desktop/data-analyst-job-market/mlruns/1/models/m-8c1b9a32385e42ddb050458f1c56eec2/artifacts
+flavors:
+  python_function:
+    env:
+      conda: conda.yaml
+      virtualenv: python_env.yaml
+    loader_module: mlflow.sklearn
+    model_path: model.pkl
+    predict_fn: predict
+    python_version: 3.11.2
+  sklearn:
+    code: null
+    pickled_model: model.pkl
+    serialization_format: cloudpickle
+    sklearn_version: 1.9.0
+    skops_trusted_types: null
+mlflow_version: 3.14.0
+model_id: m-8c1b9a32385e42ddb050458f1c56eec2
+model_size_bytes: 28772822
+model_uuid: m-8c1b9a32385e42ddb050458f1c56eec2
+prompts: null
+run_id: b38a10095cc849bca04d4aac3e7f2ab6
+utc_time_created: '2026-07-19 10:50:38.096381'

@@ -1,10 +1,12 @@
-"""
+﻿"""
 Trains a salary prediction model for Data Analyst roles using salary_data_analyst.csv.
 
 Run this once to produce models/salary_model.joblib, which app.py loads
 to power the "Estimate Your Salary" widget in the dashboard.
 """
 
+import mlflow
+import mlflow.sklearn
 import pandas as pd
 import joblib
 from pathlib import Path
@@ -14,6 +16,8 @@ from sklearn.preprocessing import OneHotEncoder
 from sklearn.pipeline import Pipeline
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.metrics import mean_absolute_error, r2_score
+
+mlflow.set_experiment("job-market-salary-model")
 
 # --- 1. Load data ---
 df = pd.read_csv("data/salary_data_analyst.csv")
@@ -33,33 +37,45 @@ X_train, X_test, y_train, y_test = train_test_split(
     X, y, test_size=0.2, random_state=42
 )
 
-# --- 3. Preprocessing + model pipeline ---
-preprocessor = ColumnTransformer(
-    transformers=[
-        ("cat", OneHotEncoder(handle_unknown="ignore"), CATEGORICAL_FEATURES),
-    ],
-    remainder="passthrough",  # keeps experience_years as-is
-)
+with mlflow.start_run():
+    # --- 3. Preprocessing + model pipeline ---
+    preprocessor = ColumnTransformer(
+        transformers=[
+            ("cat", OneHotEncoder(handle_unknown="ignore"), CATEGORICAL_FEATURES),
+        ],
+        remainder="passthrough",
+    )
 
-model = Pipeline(steps=[
-    ("preprocess", preprocessor),
-    ("regressor", RandomForestRegressor(
-        n_estimators=200, max_depth=12, random_state=42, n_jobs=-1
-    )),
-])
+    n_estimators = 200
+    max_depth = 12
 
-model.fit(X_train, y_train)
+    model = Pipeline(steps=[
+        ("preprocess", preprocessor),
+        ("regressor", RandomForestRegressor(
+            n_estimators=n_estimators, max_depth=max_depth, random_state=42, n_jobs=-1
+        )),
+    ])
 
-# --- 4. Evaluate honestly (this is what you cite in your README/interview) ---
-preds = model.predict(X_test)
-mae = mean_absolute_error(y_test, preds)
-r2 = r2_score(y_test, preds)
+    model.fit(X_train, y_train)
 
-print(f"Test MAE:  ${mae:,.0f}")
-print(f"Test R^2:  {r2:.3f}")
-print(f"Baseline (predict mean) MAE: ${mean_absolute_error(y_test, [y_train.mean()]*len(y_test)):,.0f}")
+    # --- 4. Evaluate honestly ---
+    preds = model.predict(X_test)
+    mae = mean_absolute_error(y_test, preds)
+    r2 = r2_score(y_test, preds)
+    baseline_mae = mean_absolute_error(y_test, [y_train.mean()] * len(y_test))
 
-# --- 5. Save model ---
-Path("models").mkdir(exist_ok=True)
-joblib.dump(model, "models/salary_model.joblib")
-print("Saved model to models/salary_model.joblib")
+    print("Test MAE:  $" + format(mae, ",.0f"))
+    print("Test R^2:  " + format(r2, ".3f"))
+    print("Baseline (predict mean) MAE: $" + format(baseline_mae, ",.0f"))
+
+    mlflow.log_param("n_estimators", n_estimators)
+    mlflow.log_param("max_depth", max_depth)
+    mlflow.log_metric("test_mae", mae)
+    mlflow.log_metric("test_r2", r2)
+    mlflow.log_metric("baseline_mae", baseline_mae)
+    mlflow.sklearn.log_model(model, "model", serialization_format="cloudpickle")
+
+    # --- 5. Save model (unchanged, app.py still loads from here) ---
+    Path("models").mkdir(exist_ok=True)
+    joblib.dump(model, "models/salary_model.joblib")
+    print("Saved model to models/salary_model.joblib")
